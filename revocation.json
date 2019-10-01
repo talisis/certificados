@@ -1,8 +1,8 @@
 {
     "@context": "https://w3id.org/openbadges/v2",
-    "id": "https://raw.githubusercontent.com/ppfish45/Blockcerts_test/master/revocation_list.json",
+    "id": "https://raw.githubusercontent.com/talisis/certificados/master/revocation.json",
     "type": "RevocationList",
-    "issuer": "https://raw.githubusercontent.com/ppfish45/Blockcerts_test/master/test.json",
+    "issuer": "https://raw.githubusercontent.com/talisis/certificados/master/issuer.json",
     "revokedAssertions": [
       {
         "id": "urn:uuid:eda7d784-c03b-40a2-ac10-4857e9627329",
