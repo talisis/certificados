@@ -2,15 +2,14 @@ import boto3
 import json
 from boto3.dynamodb.conditions import Key, Attr
 import copy
-
-dynamodb = boto3.resource('dynamodb', region_name='us-west-2')
-table = dynamodb.Table('employees')
-
-json_unsigned = dict()
+import argparse
+import csv
+import pandas as pd
 
 ## Funcion para crear template de informacion necesaria
-def inicializa_unsigned_cert(json_unsigned):
-    json_unsigned["issuedOn"] = "2019-10-11T14:15:47.490752+00:00"
+def inicializa_unsigned_cert():
+    json_unsigned  = dict()
+    json_unsigned["issuedOn"] = "2019-10-11T16:55:47.490752+00:00"
     json_unsigned["recipient"] = dict()
     json_unsigned["recipient"]["identity"] = "adrian.rodriguez@talisis.com"
     json_unsigned["recipient"]["type"] = "email"
@@ -63,19 +62,60 @@ def crea_unsigned_certificate_files(lista_jsons):
             json.dump(temp_json, file,ensure_ascii=False)
 
 
-## Obtener info de Base de datos de colaboradores 
-response = table.scan(
-    #KeyConditionExpression=Key('id').eq('11b8c764-e9c6-11e9-8159-302432ce7b87')
-    ## Filtrar  los que su nombre comienza con A y que son genero masculino
-    FilterExpression=Attr('nombre').begins_with("A") & Attr('genero').eq("masculino") 
-)
+def consulta_base(table="employees"):
+    dynamodb = boto3.resource('dynamodb', region_name='us-west-2')
+    table = dynamodb.Table(table)
+    ## Obtener info de Base de datos de colaboradores 
+    response = table.scan(
+        #KeyConditionExpression=Key('id').eq('11b8c764-e9c6-11e9-8159-302432ce7b87')
+        ## Filtrar  los que su nombre comienza con A y que son genero masculino
+        FilterExpression=Attr('nombre').begins_with("A") & Attr('genero').eq("masculino") 
+    )
+    return response
+
+def extract(d, keys):
+    return dict((k, d[k]) for k in keys if k in d)
+
+def guarda_csv(diccionario,csv_filename="export_table.csv",csv_columns=["id","nombre_completo","email_trabajo"]):
+    lista_dict = [extract(x,csv_columns) for x in diccionario]
+    with open(path_salida + csv_filename, 'w',encoding="utf-8") as csvfile:
+        try:
+            writer = csv.DictWriter(csvfile, fieldnames=csv_columns,lineterminator='\n')
+            writer.writeheader()
+            for data in lista_dict:
+                writer.writerow(data)
+        except:
+            print("I/O Error")
+
+    print("Se guardo csv exitosamente")
+    return 0
+
+def lee_csv(csv_filename="export_table.csv"):
+    return pd.read_csv(csv_filename).to_dict('records')
+
 
 if __name__ == '__main__':
 
-    json_unsigned = inicializa_unsigned_cert(json_unsigned)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--procesacsv", help="increase output verbosity",action="store_true")
+    parser.add_argument("-g", "--guardacsv", help="increase output verbosity",action="store_true")
+    parser.add_argument("--generajsons", help="increase output verbosity",action="store_true")
+
+    args = parser.parse_args()
+
+    if args.procesacsv:
+        print("procesando csv \n")
+        response = lee_csv(path_salida+"export_table.csv")
+    else:
+        print("procesando bd \n")
+        response = consulta_base(table="employees")["Items"]
+
+
+    #json_unsigned = dict()
+    json_unsigned = inicializa_unsigned_cert()
     list_unsigned_jsons = []
 
-    for item in response['Items']:
+    for item in response:
         json_temp = copy.deepcopy(json_unsigned)
         user_id = item['id']
         user_name = item['nombre_completo']
@@ -90,26 +130,33 @@ if __name__ == '__main__':
 
         list_unsigned_jsons.append(json_temp)
 
-    crea_unsigned_certificate_files(list_unsigned_jsons)
+    if args.guardacsv: # Flag de guardar a csv lo de la BD
+        guarda_csv(diccionario = response, csv_filename="export_table.csv")
+
+    if args.generajsons:
+        crea_unsigned_certificate_files(list_unsigned_jsons)   
+
+    #Generar certificados jsons    
+    #crea_unsigned_certificate_files(list_unsigned_jsons)
 
 
 
-json_unsigned = inicializa_unsigned_cert(json_unsigned)
-list_unsigned_jsons = []
+# json_unsigned = inicializa_unsigned_cert(json_unsigned)
+# list_unsigned_jsons = []
 
-for item in response['Items']:
-    json_temp = copy.deepcopy(json_unsigned)
-    user_id = item['id']
-    user_name = item['nombre_completo']
-    user_mail = item['email_trabajo']
+# for item in response['Items']:
+#     json_temp = copy.deepcopy(json_unsigned)
+#     user_id = item['id']
+#     user_name = item['nombre_completo']
+#     user_mail = item['email_trabajo']
     
-    json_temp["recipient"]["identity"] = user_mail
-    json_temp["recipientProfile"]["name"] = user_name
+#     json_temp["recipient"]["identity"] = user_mail
+#     json_temp["recipientProfile"]["name"] = user_name
     
-    print(user_id)
-    print(user_name)
-    print(user_mail)
+#     print(user_id)
+#     print(user_name)
+#     print(user_mail)
 
-    list_unsigned_jsons.append(json_temp)
+#     list_unsigned_jsons.append(json_temp)
 
-crea_unsigned_certificate_files(list_unsigned_jsons)
+# crea_unsigned_certificate_files(list_unsigned_jsons)
