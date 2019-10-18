@@ -6,6 +6,7 @@ import argparse
 import csv
 import pandas as pd
 import datetime
+import sys
 
 ## Funcion para crear template de informacion necesaria
 def inicializa_unsigned_cert():
@@ -55,7 +56,7 @@ def inicializa_unsigned_cert():
     
     return json_unsigned
 
-
+path_salida = "/home/ubuntu/certificados/cert-issuer/data/unsigned_certificates2/"
 path_salida = "C:/Users/adrian.rodriguez/Desktop/Proyectos/github_talisis/certificados/unsigned/batch_unsigned/"
 
 ## Guardar archivos json's de cada certificado no firmado
@@ -64,6 +65,7 @@ def crea_unsigned_certificate_files(lista_jsons):
         file_name = path_salida+temp_json["recipient"]["identity"]+".json"
         with open(file_name,"w",encoding="utf-8") as file: 
             json.dump(temp_json, file,ensure_ascii=False)
+    print("Se genero los jsons en "+path_salida)
 
 
 def consulta_base(table="employees"):
@@ -82,7 +84,7 @@ def extract(d, keys):
 
 def guarda_csv(diccionario,csv_filename="export_table.csv",csv_columns=["id","nombre_completo","email_trabajo"]):
     lista_dict = [extract(x,csv_columns) for x in diccionario]
-    with open(path_salida + csv_filename, 'w',encoding="utf-8") as csvfile:
+    with open(csv_filename, 'w',encoding="utf-8") as csvfile:
         try:
             writer = csv.DictWriter(csvfile, fieldnames=csv_columns,lineterminator='\n')
             writer.writeheader()
@@ -105,12 +107,18 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--guardacsv", help="guarda info a csv",action="store_true")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",action="store_true")
     parser.add_argument("--generajsons", help="guarda json de cada usuario a generar cert",action="store_true")
+    parser.add_argument("--pathsalida",help="Modifica path de salida",type=str)
+
 
     args = parser.parse_args()
 
+    if args.pathsalida:
+        path_salida = args.pathsalida
+
+
     if args.procesacsv:
         print("procesando csv \n")
-        response = lee_csv(path_salida+"export_table.csv")
+        response = lee_csv("export_table.csv")
     else:
         print("procesando bd \n")
         response = consulta_base(table="employees")["Items"]
