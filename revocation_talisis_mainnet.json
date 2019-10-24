@@ -1,0 +1,16 @@
+{
+    "@context": "https://w3id.org/openbadges/v2",
+    "id": "https://raw.githubusercontent.com/talisis/certificados/master/revocation_talisis_mainnet.json",
+    "type": "RevocationList",
+    "issuer": "https://raw.githubusercontent.com/talisis/certificados/master/issuer_talisis_mainnet.json",
+    "revokedAssertions": [
+      {
+        "id": "urn:uuid:eda7d784-c03b-40a2-ac10-4857e9627329",
+        "revocationReason": "Issued in error."
+      },
+      {
+        "id": "urn:uuid:1ab55f52-1e52-4331-8663-480b67773621",
+        "revocationReason": "Certificado revocado por la escuela"
+      }
+     ]
+  }
