@@ -73,19 +73,24 @@ def inserta_html_embebido(json_modificado):
     ## Usar comilla simple para no escapear texto y no es necesario escapear mas, ya que el dump a json lo generara
 
 ## Funcion para crear template de informacion necesaria
-def inicializa_unsigned_cert(dict_imagenes,mainnet=False):
+def inicializa_unsigned_cert(dict_imagenes,mainnet=False,html=False):
     json_unsigned  = dict()
     
     json_unsigned["@context"] = ["https://w3id.org/openbadges/v2","https://w3id.org/blockcerts/v2"]
     ## Agregado para representacion html en blockcerts
-    json_unsigned["@context"].append(dict())
-    displayhtmlid = {"@id":"schema:description"}
-    json_unsigned["@context"][2]["displayHtml"] = displayhtmlid
-
-    ## Prueba
-    json_unsigned["displayHtml"] = 'inserta_html_embebido()'
-    json_unsigned["issuedOn"] = "2019-10-11T16:55:47.490752+00:00"
     
+    ##Solo se agrega al contexto el campo customizado displayHtml si se pasa explictitamente como parametro a la consola
+    if html:
+        json_unsigned["@context"].append(dict())
+        displayhtmlid = {"@id":"schema:description"}
+        json_unsigned["@context"][2]["displayHtml"] = displayhtmlid
+
+        ## Prueba
+        json_unsigned["displayHtml"] = 'inserta_html_embebido()'
+    
+    #Esta fecha se cambiara al momento de ir generando los certificados
+    json_unsigned["issuedOn"] = "2019-10-11T16:55:47.490752+00:00"
+        
     ## Agregado para visualizar html
     ## Hay que modificar cada HTML para insertarle los datos del colaborador o estudiante
     
@@ -100,7 +105,11 @@ def inicializa_unsigned_cert(dict_imagenes,mainnet=False):
     json_unsigned["recipient"]["hashed"] = False
     json_unsigned["type"] = "Assertion"
     json_unsigned["verification"] = dict()
-    json_unsigned["verification"]["publicKey"] = "ecdsa-koblitz-pubkey:mhdFbmgS63yrBNokyFHtAnAEq5RuU5BWp4"
+    if mainnet:
+        ## Se pasa la cuenta de bictoin real (con 25 dolares)
+        json_unsigned["verification"]["publicKey"] = "ecdsa-koblitz-pubkey:18jTSdTxXcEGWc6TU2rHRnF48sfX23nfcy"
+    else:
+        json_unsigned["verification"]["publicKey"] = "ecdsa-koblitz-pubkey:mhdFbmgS63yrBNokyFHtAnAEq5RuU5BWp4"
     json_unsigned["verification"]["type"] = ["MerkleProofVerification2017","Extension"]
     
 
@@ -110,14 +119,22 @@ def inicializa_unsigned_cert(dict_imagenes,mainnet=False):
     json_unsigned["badge"]["issuer"]["name"] = "Talisis"
     json_unsigned["badge"]["issuer"]["email"] = "adrian.rodriguez@talisis.com"
     json_unsigned["badge"]["issuer"]["type"] = "Profile"
-    json_unsigned["badge"]["issuer"]["id"] = "https://raw.githubusercontent.com/talisis/certificados/master/issuer.json"
+    if mainnet:
+        json_unsigned["badge"]["issuer"]["id"] = "https://raw.githubusercontent.com/talisis/certificados/master/issuer_talisis_mainnet.json"
+    else:    
+        json_unsigned["badge"]["issuer"]["id"] = "https://raw.githubusercontent.com/talisis/certificados/master/issuer.json"
+
     if "badge_issuer_image" in dict_imagenes.keys():
         json_unsigned["badge"]["issuer"]["image"] = dict_imagenes["badge_issuer_image"]
         print("Se tomo badge_issuer_image de archivo de configuracion")
     else:
         json_unsigned["badge"]["issuer"]["image"] = "data:image/png;base64,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"
     ## Obtener al vuelo el base64 de una imagen
-    json_unsigned["badge"]["issuer"]["revocationList"] = "https://raw.githubusercontent.com/talisis/certificados/master/revocation.json"
+    if mainnet:
+        json_unsigned["badge"]["issuer"]["revocationList"] = "https://raw.githubusercontent.com/talisis/certificados/master/revocation_talisis_mainnet.json"
+    else:
+        json_unsigned["badge"]["issuer"]["revocationList"] = "https://raw.githubusercontent.com/talisis/certificados/master/revocation.json"
+
     json_unsigned["badge"]["name"] = "Certificado de asistencia a Convencion 2019"
     json_unsigned["badge"]["type"]="BadgeClass"
     json_unsigned["badge"]["criteria"] = dict()
@@ -151,6 +168,7 @@ def inicializa_unsigned_cert(dict_imagenes,mainnet=False):
     if mainnet:
         ## Agregar llave publica de recipiente que pertenezca a mainnet
         json_unsigned["recipientProfile"]["publicKey"] = "ecdsa-koblitz-pubkey:3AboWyQorKysnygd4o6zucVpJ56btyKZS9"
+        ##Otra opcion 31n4rth1Qqg23tkBL5Ed4kzGENzXYehyB4
     else:
         json_unsigned["recipientProfile"]["publicKey"] = "ecdsa-koblitz-pubkey:mkwntSiQmc14H65YxwckLenxY3DsEpvFbe"
 
@@ -236,6 +254,7 @@ if __name__ == '__main__':
     parser.add_argument("--nogenerajsons", help="guarda json de cada usuario a generar cert",action="store_true")
     parser.add_argument("--pathsalida",help="Modifica path de salida",type=str)
     parser.add_argument("--mainnet",help="Al activar esta opcion se usara bitcoin real",action="store_true")
+    parser.add_argument("--html",help="Al activar esta opcion se usara formato HTML para certificado",action="store_true")
 
 
     args = parser.parse_args()
@@ -253,10 +272,10 @@ if __name__ == '__main__':
 
     #json_unsigned = dict()
     dict_imagenes = obtener_imagenes_base()
-    if args.mainnet:
-        json_unsigned = inicializa_unsigned_cert(dict_imagenes,mainnet=True)
-    else:
-        json_unsigned = inicializa_unsigned_cert(dict_imagenes,mainnet=False) ## Usar testnet default
+    
+    ## Usar (False) testnet default, Usar html False default a menos que se pase explicitamente el parametro
+    json_unsigned = inicializa_unsigned_cert(dict_imagenes,mainnet=args.mainnet,html=args.html)
+
     list_unsigned_jsons = []
 
     for item in response:
@@ -269,7 +288,8 @@ if __name__ == '__main__':
         json_temp["recipientProfile"]["name"] = user_name
         
         ## Pasar datos de colaboarado a template HTML
-        #json_temp["displayHtml"] = inserta_html_embebido(json_temp)
+        if args.html:
+            json_temp["displayHtml"] = inserta_html_embebido(json_temp)
 
         if args.verbose:
             print(user_id)
@@ -299,4 +319,9 @@ python genera_unsigned_cetificates_lnk.py -p -g -v --pathsalida "C:/Users/adrian
 
 ## Evitar Generar jsons de salida --generajsons (Pruebas)
 python genera_unsigned_cetificates_lnk.py -p -g -v --nogenerajsons --pathsalida "C:/Users/adrian.rodriguez/Desktop/Proyectos/github_talisis/certificados/unsigned/batch_unsigned_2/"
+
+Probar nuevos cambios y mandar el batch a batch_unsigned_3
+    python genera_unsigned_cetificates.py -p -v --mainnet --pathsalida "C:/Users/adrian.rodriguez/Desktop/Proyectos/github_talisis/certificados/unsigned/batch_unsigned_3/"
+Probar generacion de html y mandar el batch a batch_unsigned_4
+    python genera_unsigned_cetificates.py -p -v --mainnet --html --pathsalida "C:/Users/adrian.rodriguez/Desktop/Proyectos/github_talisis/certificados/unsigned/batch_unsigned_4/"    
 '''
